@@ -124,7 +124,6 @@ class HaEntitiesMapperPanel extends HTMLElement {
     const key = this._q("#f-key").value.trim();
     const name = this._q("#f-name").value.trim();
     const target = this._slotValue(this._q("#f-target-slot"));
-    const icon = this._q("#f-icon").value.trim();
     if (!key || !target) {
       this._toast("Key und Ziel-Entity sind Pflicht.", true);
       return;
@@ -135,11 +134,9 @@ class HaEntitiesMapperPanel extends HTMLElement {
         key,
         name: name || key,
         target,
-        icon: icon || null,
       });
       this._q("#f-key").value = "";
       this._q("#f-name").value = "";
-      this._q("#f-icon").value = "";
       this._fillSlot(this._q("#f-target-slot"), "");
       const p = this._q("#f-target-slot").querySelector("ha-entity-picker, input");
       if (p) p.value = "";
@@ -155,7 +152,6 @@ class HaEntitiesMapperPanel extends HTMLElement {
     if (!row) return;
     const name = row.querySelector(".e-name").value.trim();
     const target = this._slotValue(row.querySelector(".e-target-slot"));
-    const icon = row.querySelector(".e-icon").value.trim();
     if (!target) {
       this._toast("Ziel-Entity darf nicht leer sein.", true);
       return;
@@ -166,7 +162,6 @@ class HaEntitiesMapperPanel extends HTMLElement {
         key,
         name: name || key,
         target,
-        icon: icon || null,
       });
       this._editingKey = null;
       this._toast(`"${key}" gespeichert.`);
@@ -220,9 +215,6 @@ class HaEntitiesMapperPanel extends HTMLElement {
             </label>
             <label>Ziel-Entity
               <div id="f-target-slot" class="target-slot"></div>
-            </label>
-            <label>Icon <span>(optional)</span>
-              <input id="f-icon" placeholder="mdi:lightbulb" />
             </label>
             <button id="f-add" class="primary">Hinzufügen</button>
           </div>
@@ -299,7 +291,7 @@ class HaEntitiesMapperPanel extends HTMLElement {
           <td><input class="e-name" value="${esc(m.name)}" /></td>
           <td><code>${m.key}</code></td>
           <td><div class="e-target-slot target-slot" data-value="${esc(m.target)}"></div></td>
-          <td><input class="e-icon" placeholder="mdi:…" value="${esc(m.icon || "")}" /></td>
+          <td class="value" data-target="${esc(m.target)}">—</td>
           <td class="actions">
             <button class="btn-save primary">Speichern</button>
             <button class="btn-cancel">Abbrechen</button>
@@ -370,7 +362,7 @@ const STYLE = `
   .card { background: var(--card-background-color, #fff); border-radius: 12px;
           box-shadow: var(--ha-card-box-shadow, 0 2px 6px rgba(0,0,0,.12)); padding: 16px; margin-bottom: 16px; }
   .card h2 { margin: 0 0 12px; font-size: 16px; }
-  .form { display: grid; grid-template-columns: repeat(4, 1fr) auto; gap: 10px; align-items: end; }
+  .form { display: grid; grid-template-columns: repeat(3, 1fr) auto; gap: 10px; align-items: end; }
   .form label { display: flex; flex-direction: column; font-size: 12px; color: var(--secondary-text-color); gap: 4px; }
   .form label span { font-weight: 400; opacity: .8; }
   input { padding: 8px; border: 1px solid var(--divider-color, #ddd); border-radius: 8px;
