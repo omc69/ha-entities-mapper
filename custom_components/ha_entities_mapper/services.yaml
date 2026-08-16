@@ -1,0 +1,24 @@
+action:
+  name: Control by key
+  description: >-
+    Resolve a mapping key to its target entity and switch it
+    (turn_on / turn_off / toggle). Domain-agnostic.
+  fields:
+    key:
+      name: Key
+      description: The mapping key (e.g. mein_licht).
+      required: true
+      example: mein_licht
+      selector:
+        text:
+    action:
+      name: Action
+      description: What to do with the mapped entity.
+      required: true
+      example: toggle
+      selector:
+        select:
+          options:
+            - turn_on
+            - turn_off
+            - toggle

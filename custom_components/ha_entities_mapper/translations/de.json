@@ -1,0 +1,30 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "HA Entities Mapper",
+        "description": "Entities Mapper hinzufügen. Die Tabelle Key → Entity pflegst du danach im Seitenleisten-Panel „Entities Mapper“."
+      }
+    },
+    "abort": {
+      "already_configured": "HA Entities Mapper ist bereits eingerichtet (nur eine Instanz möglich).",
+      "single_instance_allowed": "HA Entities Mapper ist bereits eingerichtet (nur eine Instanz möglich)."
+    }
+  },
+  "services": {
+    "action": {
+      "name": "Per Key steuern",
+      "description": "Löst einen Mapping-Key zur Ziel-Entity auf und schaltet sie (domän-unabhängig).",
+      "fields": {
+        "key": {
+          "name": "Key",
+          "description": "Der Mapping-Key, z. B. mein_licht."
+        },
+        "action": {
+          "name": "Aktion",
+          "description": "turn_on, turn_off oder toggle."
+        }
+      }
+    }
+  }
+}

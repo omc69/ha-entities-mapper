@@ -1,0 +1,30 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "HA Entities Mapper",
+        "description": "Add the Entities Mapper. Manage your key → entity table in the \"Entities Mapper\" sidebar panel afterwards."
+      }
+    },
+    "abort": {
+      "already_configured": "HA Entities Mapper is already set up (only one instance is supported).",
+      "single_instance_allowed": "HA Entities Mapper is already set up (only one instance is supported)."
+    }
+  },
+  "services": {
+    "action": {
+      "name": "Control by key",
+      "description": "Resolve a mapping key to its target entity and switch it (domain-agnostic).",
+      "fields": {
+        "key": {
+          "name": "Key",
+          "description": "The mapping key, e.g. mein_licht."
+        },
+        "action": {
+          "name": "Action",
+          "description": "turn_on, turn_off or toggle."
+        }
+      }
+    }
+  }
+}
