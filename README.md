@@ -2,99 +2,81 @@
 
 [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=omc69&repository=ha-entities-mapper&category=integration)
 
-Ein **semantischer Layer** über Home-Assistant-Entities: Du vergibst einen Wunsch-Key
-(z. B. `mein_licht`) und ordnest ihm eine echte Entity zu (z. B. `light.buro_christian`).
-Gepflegt wird die Tabelle in einem eigenen **Seitenleisten-Panel**.
+A **semantic layer** over Home Assistant entities: you pick a friendly key
+(e.g. `my_light`) and map it to a real entity (e.g. `light.office_desk`).
+The table is maintained in a dedicated **sidebar panel**.
 
-Pro Mapping entsteht:
+Each mapping provides:
 
-- **`sensor.<key>`** — ein Proxy-Sensor, der State **und Wert + Einheit** der Ziel-Entity
-  spiegelt (universal, für jede Domain, nicht nur Licht). → zum **Lesen** in der App.
-- **`ha_entities_mapper.action`** — ein Service, der den Key auflöst und die echte Entity
-  schaltet (`turn_on` / `turn_off` / `toggle`, domän-unabhängig). → zum **Schalten**.
+- **`sensor.<key>`** — a proxy sensor mirroring the target's state **plus value
+  and unit** (universal — works for any domain, not just lights). → for **reading**.
+- **`ha_entities_mapper.action`** — a service that resolves the key and switches
+  the real entity (`turn_on` / `turn_off` / `toggle`, domain-agnostic). → for **switching**.
 
-Domain-Slug: `ha_entities_mapper`. Nur eine Instanz.
-
----
-
-## Installation (Studio Code Server)
-
-1. Öffne das Add-on **Studio Code Server** (VS Code im Browser).
-2. Lege den Ordner an: **`/config/custom_components/ha_entities_mapper/`**
-   (der Ordner `custom_components` liegt neben deiner `configuration.yaml`; falls er
-   noch nicht existiert, einfach anlegen).
-3. Kopiere den kompletten Inhalt von `custom_components/ha_entities_mapper/` aus diesem
-   Repo dort hinein. Danach muss es so aussehen:
-
-   ```
-   config/custom_components/ha_entities_mapper/
-     __init__.py
-     config_flow.py
-     const.py
-     manifest.json
-     sensor.py
-     services.yaml
-     strings.json
-     websocket_api.py
-     translations/en.json
-     translations/de.json
-     panel/ha-entities-mapper-panel.js
-   ```
-
-4. **Home Assistant neu starten** (Einstellungen → System → ⟲, oder Entwicklerwerkzeuge → Neustart).
-5. **Einstellungen → Geräte & Dienste → Integration hinzufügen → „HA Entities Mapper"**.
-6. In der linken Seitenleiste erscheint **„Entities Mapper"** — dort die Tabelle pflegen.
-
-> Änderst du nur die Panel-JS später, reicht ein Reload der Integration bzw. der Seite;
-> für Python-Änderungen ist ein HA-Neustart nötig.
+Domain slug: `ha_entities_mapper`. Single instance.
 
 ---
 
-## Bedienung im Panel
+## Installation
 
-- **Neues Mapping:** Key (slug), Anzeigename, Ziel-Entity (mit Autovervollständigung),
-  optional Icon → *Hinzufügen*.
-- Pro Zeile: Live-Wert der Ziel-Entity, Test-Buttons **▲ An / ▼ Aus / ⇅ Toggle**,
-  **Edit** (Name/Ziel/Icon ändern) und **✕** (löschen, mit Rückfrage).
-- Der **Key ist unveränderlich** (er ist die `sensor.<key>`-Adresse). Zum Umbenennen:
-  löschen + neu anlegen.
+### Via HACS (recommended)
+
+1. Click the badge above, or add `omc69/ha-entities-mapper` as a **custom
+   repository** (category **Integration**) in HACS.
+2. Download **HA Entities Mapper** in HACS.
+3. **Restart Home Assistant.**
+4. **Settings → Devices & Services → Add Integration → "HA Entities Mapper".**
+5. Open the **"Entities Mapper"** panel in the sidebar and add your first mapping.
+
+### Manual
+
+Copy `custom_components/ha_entities_mapper/` into your `/config/custom_components/`,
+restart Home Assistant, then add the integration as in step 4 above.
 
 ---
 
-## Nutzung aus der HomeCommander-App (WebSocket)
+## Using the panel
 
-**Schalten** (per Key, egal ob Licht/Schalter/…):
+- **New mapping:** key (slug), display name, target entity (searchable picker) → *Add*.
+- Per row: the target's live value, test buttons **▲ On / ▼ Off / ⇅ Toggle**,
+  **Edit** (change name/target) and **✕** (delete, with confirmation).
+- The **key is immutable** (it is the `sensor.<key>` address). To rename: delete
+  and re-create. The proxy inherits the target entity's icon/device class automatically.
+
+---
+
+## Using it from an app (WebSocket)
+
+**Switch** (by key, regardless of light/switch/…):
 
 ```json
 {
-  "id": 1,
   "type": "call_service",
   "domain": "ha_entities_mapper",
   "service": "action",
-  "service_data": { "key": "mein_licht", "action": "toggle" }
+  "service_data": { "key": "my_light", "action": "toggle" }
 }
 ```
 
-**Lesen** — die Proxy-Entity ganz normal abonnieren/abfragen:
+**Read** — subscribe to the proxy entity as usual:
 
 ```json
-{ "id": 2, "type": "subscribe_entities", "entity_ids": ["sensor.mein_licht"] }
+{ "type": "subscribe_entities", "entity_ids": ["sensor.my_light"] }
 ```
 
-`sensor.mein_licht.state` trägt den Wert der Ziel-Entity; bei numerischen Zielen inkl.
-`unit_of_measurement`. Zusätzliche Attribute: `source_entity_id`, `source_domain`,
+`sensor.my_light.state` carries the target's value; for numeric targets including
+`unit_of_measurement`. Extra attributes: `source_entity_id`, `source_domain`,
 `source_state`, `source_unit`, `source_device_class`.
 
-Die Mapping-Tabelle kann die App auch selbst lesen/pflegen:
-`ha_entities_mapper/list`, `/add`, `/update`, `/delete` (WebSocket-Commands; add/update/delete
-erfordern Admin).
+The mapping table can also be read/maintained via WebSocket commands:
+`ha_entities_mapper/list`, `/add`, `/update`, `/delete` (add/update/delete require admin).
 
 ---
 
-## Grenzen (v1)
+## Limits (v1)
 
-- Schalten deckt `turn_on/turn_off/toggle` ab (kein Dimmen/Farbe/Prozent durchgereicht —
-  dafür wäre eine domänenspezifische Erweiterung nötig).
-- Der Proxy ist ein **Sensor** (Lesen + Schalten via Service). Er ist bewusst universal,
-  daher kein `light.`-Verhalten mit Helligkeit etc.
-- Eine Instanz, lokale Speicherung unter `.storage/ha_entities_mapper`.
+- Switching covers `turn_on/turn_off/toggle` (no brightness/color/percentage
+  pass-through — that would need a domain-specific extension).
+- The proxy is a **sensor** (read + switch via service); it is intentionally
+  universal, so it does not behave like a real `light.` with brightness etc.
+- Single instance, stored under `.storage/ha_entities_mapper`.

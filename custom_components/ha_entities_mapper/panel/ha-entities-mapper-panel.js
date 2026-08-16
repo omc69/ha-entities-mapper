@@ -70,14 +70,14 @@ class HaEntitiesMapperPanel extends HTMLElement {
       const el = document.createElement("ha-entity-picker");
       el.hass = this._hass;
       el.allowCustomEntity = true;
-      el.label = "Ziel-Entity";
+      el.label = "Target entity";
       if (value) el.value = value;
       return el;
     }
     const inp = document.createElement("input");
     inp.type = "text";
     inp.setAttribute("list", "entity-list");
-    inp.placeholder = "light.buro_christian";
+    inp.placeholder = "light.office_desk";
     inp.className = "fallback-target";
     if (value) inp.value = value;
     return inp;
@@ -116,7 +116,7 @@ class HaEntitiesMapperPanel extends HTMLElement {
       this._mappings = res.mappings || [];
       this._renderRows();
     } catch (err) {
-      this._toast(`Fehler beim Laden: ${err.message || err}`, true);
+      this._toast(`Failed to load: ${err.message || err}`, true);
     }
   }
 
@@ -125,7 +125,7 @@ class HaEntitiesMapperPanel extends HTMLElement {
     const name = this._q("#f-name").value.trim();
     const target = this._slotValue(this._q("#f-target-slot"));
     if (!key || !target) {
-      this._toast("Key und Ziel-Entity sind Pflicht.", true);
+      this._toast("Key and target entity are required.", true);
       return;
     }
     try {
@@ -140,10 +140,10 @@ class HaEntitiesMapperPanel extends HTMLElement {
       this._fillSlot(this._q("#f-target-slot"), "");
       const p = this._q("#f-target-slot").querySelector("ha-entity-picker, input");
       if (p) p.value = "";
-      this._toast(`Mapping "${key}" angelegt.`);
+      this._toast(`Mapping "${key}" created.`);
       this._reload();
     } catch (err) {
-      this._toast(`Add fehlgeschlagen: ${err.message || err}`, true);
+      this._toast(`Add failed: ${err.message || err}`, true);
     }
   }
 
@@ -153,7 +153,7 @@ class HaEntitiesMapperPanel extends HTMLElement {
     const name = row.querySelector(".e-name").value.trim();
     const target = this._slotValue(row.querySelector(".e-target-slot"));
     if (!target) {
-      this._toast("Ziel-Entity darf nicht leer sein.", true);
+      this._toast("Target entity must not be empty.", true);
       return;
     }
     try {
@@ -164,10 +164,10 @@ class HaEntitiesMapperPanel extends HTMLElement {
         target,
       });
       this._editingKey = null;
-      this._toast(`"${key}" gespeichert.`);
+      this._toast(`"${key}" saved.`);
       this._reload();
     } catch (err) {
-      this._toast(`Speichern fehlgeschlagen: ${err.message || err}`, true);
+      this._toast(`Save failed: ${err.message || err}`, true);
     }
   }
 
@@ -175,10 +175,10 @@ class HaEntitiesMapperPanel extends HTMLElement {
     try {
       await this._hass.callWS({ type: `${DOMAIN}/delete`, key });
       this._confirmKey = null;
-      this._toast(`"${key}" gelöscht.`);
+      this._toast(`"${key}" deleted.`);
       this._reload();
     } catch (err) {
-      this._toast(`Löschen fehlgeschlagen: ${err.message || err}`, true);
+      this._toast(`Delete failed: ${err.message || err}`, true);
     }
   }
 
@@ -187,7 +187,7 @@ class HaEntitiesMapperPanel extends HTMLElement {
       await this._hass.callService(DOMAIN, "action", { key, action });
       this._toast(`${action} → ${key}`);
     } catch (err) {
-      this._toast(`${action} fehlgeschlagen: ${err.message || err}`, true);
+      this._toast(`${action} failed: ${err.message || err}`, true);
     }
   }
 
@@ -199,24 +199,24 @@ class HaEntitiesMapperPanel extends HTMLElement {
       <div class="wrap">
         <div class="head">
           <h1>Entities Mapper</h1>
-          <p class="sub">Wunschname (Key) → echte Entity. Der App-Layer adressiert
-          <code>sensor.&lt;key&gt;</code> zum Lesen und den Service
-          <code>${DOMAIN}.action</code> zum Schalten.</p>
+          <p class="sub">Friendly key → real entity. The app layer addresses
+          <code>sensor.&lt;key&gt;</code> to read and the
+          <code>${DOMAIN}.action</code> service to switch.</p>
         </div>
 
         <div class="card add">
-          <h2>Neues Mapping</h2>
+          <h2>New mapping</h2>
           <div class="form">
-            <label>Key <span>(slug, wird zu sensor.&lt;key&gt;)</span>
-              <input id="f-key" placeholder="mein_licht" />
+            <label>Key <span>(slug, becomes sensor.&lt;key&gt;)</span>
+              <input id="f-key" placeholder="my_light" />
             </label>
-            <label>Anzeigename
-              <input id="f-name" placeholder="Mein Licht" />
+            <label>Display name
+              <input id="f-name" placeholder="My Light" />
             </label>
-            <label>Ziel-Entity
+            <label>Target entity
               <div id="f-target-slot" class="target-slot"></div>
             </label>
-            <button id="f-add" class="primary">Hinzufügen</button>
+            <button id="f-add" class="primary">Add</button>
           </div>
         </div>
 
@@ -224,13 +224,13 @@ class HaEntitiesMapperPanel extends HTMLElement {
           <table>
             <thead>
               <tr>
-                <th>Name</th><th>Key / Proxy</th><th>Ziel-Entity</th>
-                <th>Wert</th><th class="actions">Aktionen</th>
+                <th>Name</th><th>Key / Proxy</th><th>Target entity</th>
+                <th>Value</th><th class="actions">Actions</th>
               </tr>
             </thead>
             <tbody id="rows"></tbody>
           </table>
-          <div id="empty" class="empty" hidden>Noch keine Mappings angelegt.</div>
+          <div id="empty" class="empty" hidden>No mappings yet.</div>
         </div>
       </div>
       <datalist id="entity-list"></datalist>
@@ -293,17 +293,17 @@ class HaEntitiesMapperPanel extends HTMLElement {
           <td><div class="e-target-slot target-slot" data-value="${esc(m.target)}"></div></td>
           <td class="value" data-target="${esc(m.target)}">—</td>
           <td class="actions">
-            <button class="btn-save primary">Speichern</button>
-            <button class="btn-cancel">Abbrechen</button>
+            <button class="btn-save primary">Save</button>
+            <button class="btn-cancel">Cancel</button>
           </td>
         </tr>`;
     }
     const actions = confirming
-      ? `<span class="confirm">Löschen?</span>
-         <button class="btn-del-yes danger">Ja</button>
-         <button class="btn-del-no">Nein</button>`
-      : `<button class="btn-on" title="An">▲</button>
-         <button class="btn-off" title="Aus">▼</button>
+      ? `<span class="confirm">Delete?</span>
+         <button class="btn-del-yes danger">Yes</button>
+         <button class="btn-del-no">No</button>`
+      : `<button class="btn-on" title="On">▲</button>
+         <button class="btn-off" title="Off">▼</button>
          <button class="btn-toggle" title="Toggle">⇅</button>
          <button class="btn-edit">Edit</button>
          <button class="btn-del danger">✕</button>`;
@@ -311,7 +311,7 @@ class HaEntitiesMapperPanel extends HTMLElement {
       <tr data-key="${m.key}">
         <td>${m.icon ? iconSpan(m.icon) : ""}${esc(m.name)}</td>
         <td><code>${m.key}</code><br><span class="proxy">${m.proxy_entity_id}</span></td>
-        <td>${esc(m.target)}${m.target_available ? "" : ' <span class="warn">✗ fehlt</span>'}</td>
+        <td>${esc(m.target)}${m.target_available ? "" : ' <span class="warn">✗ missing</span>'}</td>
         <td class="value" data-target="${esc(m.target)}">—</td>
         <td class="actions">${actions}</td>
       </tr>`;
