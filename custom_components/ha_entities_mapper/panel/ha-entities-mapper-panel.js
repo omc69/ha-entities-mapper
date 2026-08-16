@@ -1,6 +1,8 @@
 // HA Entities Mapper — sidebar panel
-// Vanilla custom element (no build step, no external deps). Uses hass.callWS
-// for the CRUD API and hass.callService for the control/test buttons.
+// Vanilla custom element (no build step). Uses hass.callWS for the CRUD API,
+// hass.callService for control/test buttons, and HA's native <ha-entity-picker>
+// as a searchable entity browser for the target field (with a text-input
+// fallback if the picker component can't be loaded).
 
 const DOMAIN = "ha_entities_mapper";
 
@@ -13,27 +15,97 @@ class HaEntitiesMapperPanel extends HTMLElement {
     this._built = false;
     this._editingKey = null;
     this._confirmKey = null;
+    this._pickerReady = false;
   }
 
   set hass(hass) {
-    const first = this._hass === null;
     this._hass = hass;
     if (!this._built) {
       this._build();
       this._loadDatalist();
+      this._ensurePicker();
       this._reload();
     } else {
       this._refreshLiveStates();
+      this._updatePickerHass();
     }
-    if (first) this._loadDatalist();
   }
 
   connectedCallback() {
     if (this._hass && !this._built) {
       this._build();
       this._loadDatalist();
+      this._ensurePicker();
       this._reload();
     }
+  }
+
+  // ---- native entity picker loading ---------------------------------
+
+  async _ensurePicker() {
+    if (this._pickerReady || customElements.get("ha-entity-picker")) {
+      this._pickerReady = true;
+      this._hydratePickers();
+      return;
+    }
+    try {
+      // Force HA to load its editor components (which include ha-entity-picker).
+      if (window.loadCardHelpers) {
+        const helpers = await window.loadCardHelpers();
+        const card = await helpers.createCardElement({ type: "entities", entities: [] });
+        if (card && card.constructor && card.constructor.getConfigElement) {
+          await card.constructor.getConfigElement();
+        }
+      }
+    } catch (e) {
+      // ignore — we'll fall back to the text input
+    }
+    this._pickerReady = !!customElements.get("ha-entity-picker");
+    this._hydratePickers();
+  }
+
+  _makeTargetField(value) {
+    // Returns a fresh element: ha-entity-picker if available, else <input>.
+    if (this._pickerReady && customElements.get("ha-entity-picker")) {
+      const el = document.createElement("ha-entity-picker");
+      el.hass = this._hass;
+      el.allowCustomEntity = true;
+      el.label = "Ziel-Entity";
+      if (value) el.value = value;
+      return el;
+    }
+    const inp = document.createElement("input");
+    inp.type = "text";
+    inp.setAttribute("list", "entity-list");
+    inp.placeholder = "light.buro_christian";
+    inp.className = "fallback-target";
+    if (value) inp.value = value;
+    return inp;
+  }
+
+  _fillSlot(slot, value) {
+    if (!slot) return;
+    const cur =
+      slot.querySelector("ha-entity-picker, input")?.value ?? value ?? "";
+    slot.innerHTML = "";
+    slot.appendChild(this._makeTargetField(cur));
+  }
+
+  _hydratePickers() {
+    this._fillSlot(this._q("#f-target-slot"));
+    const editSlot = this.shadowRoot.querySelector(".e-target-slot");
+    if (editSlot) this._fillSlot(editSlot, editSlot.dataset.value || "");
+  }
+
+  _updatePickerHass() {
+    this.shadowRoot
+      .querySelectorAll("ha-entity-picker")
+      .forEach((el) => (el.hass = this._hass));
+  }
+
+  _slotValue(slot) {
+    const el = slot ? slot.querySelector("ha-entity-picker, input") : null;
+    return (el && el.value ? String(el.value) : "").trim();
   }
 
   // ---- data ----------------------------------------------------------
@@ -51,7 +123,7 @@ class HaEntitiesMapperPanel extends HTMLElement {
   async _add() {
     const key = this._q("#f-key").value.trim();
     const name = this._q("#f-name").value.trim();
-    const target = this._q("#f-target").value.trim();
+    const target = this._slotValue(this._q("#f-target-slot"));
     const icon = this._q("#f-icon").value.trim();
     if (!key || !target) {
       this._toast("Key und Ziel-Entity sind Pflicht.", true);
@@ -67,8 +139,10 @@ class HaEntitiesMapperPanel extends HTMLElement {
       });
       this._q("#f-key").value = "";
       this._q("#f-name").value = "";
-      this._q("#f-target").value = "";
       this._q("#f-icon").value = "";
+      this._fillSlot(this._q("#f-target-slot"), "");
+      const p = this._q("#f-target-slot").querySelector("ha-entity-picker, input");
+      if (p) p.value = "";
       this._toast(`Mapping "${key}" angelegt.`);
       this._reload();
     } catch (err) {
@@ -80,7 +154,7 @@ class HaEntitiesMapperPanel extends HTMLElement {
     const row = this.shadowRoot.querySelector(`tr[data-key="${key}"]`);
     if (!row) return;
     const name = row.querySelector(".e-name").value.trim();
-    const target = row.querySelector(".e-target").value.trim();
+    const target = this._slotValue(row.querySelector(".e-target-slot"));
     const icon = row.querySelector(".e-icon").value.trim();
     if (!target) {
       this._toast("Ziel-Entity darf nicht leer sein.", true);
@@ -145,7 +219,7 @@ class HaEntitiesMapperPanel extends HTMLElement {
               <input id="f-name" placeholder="Mein Licht" />
             </label>
             <label>Ziel-Entity
-              <input id="f-target" list="entity-list" placeholder="light.buro_christian" />
+              <div id="f-target-slot" class="target-slot"></div>
             </label>
             <label>Icon <span>(optional)</span>
               <input id="f-icon" placeholder="mdi:lightbulb" />
@@ -172,6 +246,7 @@ class HaEntitiesMapperPanel extends HTMLElement {
     `;
     this._q("#f-add").addEventListener("click", () => this._add());
     this._built = true;
+    this._fillSlot(this._q("#f-target-slot"), "");
   }
 
   _loadDatalist() {
@@ -188,11 +263,8 @@ class HaEntitiesMapperPanel extends HTMLElement {
     if (!tbody) return;
     empty.hidden = this._mappings.length > 0;
 
-    tbody.innerHTML = this._mappings
-      .map((m) => this._rowHtml(m))
-      .join("");
+    tbody.innerHTML = this._mappings.map((m) => this._rowHtml(m)).join("");
 
-    // wire up per-row buttons
     this._mappings.forEach((m) => {
       const row = this.shadowRoot.querySelector(`tr[data-key="${m.key}"]`);
       if (!row) return;
@@ -210,6 +282,11 @@ class HaEntitiesMapperPanel extends HTMLElement {
       on(".btn-del-no", () => { this._confirmKey = null; this._renderRows(); });
       on(".btn-del-yes", () => this._delete(m.key));
     });
+
+    // Hydrate the editing row's target picker (if any).
+    const editSlot = this.shadowRoot.querySelector(".e-target-slot");
+    if (editSlot) this._fillSlot(editSlot, editSlot.dataset.value || "");
+
     this._refreshLiveStates();
   }
 
@@ -221,7 +298,7 @@ class HaEntitiesMapperPanel extends HTMLElement {
         <tr data-key="${m.key}" class="editing">
           <td><input class="e-name" value="${esc(m.name)}" /></td>
           <td><code>${m.key}</code></td>
-          <td><input class="e-target" list="entity-list" value="${esc(m.target)}" /></td>
+          <td><div class="e-target-slot target-slot" data-value="${esc(m.target)}"></div></td>
           <td><input class="e-icon" placeholder="mdi:…" value="${esc(m.icon || "")}" /></td>
           <td class="actions">
             <button class="btn-save primary">Speichern</button>
@@ -298,6 +375,8 @@ const STYLE = `
   .form label span { font-weight: 400; opacity: .8; }
   input { padding: 8px; border: 1px solid var(--divider-color, #ddd); border-radius: 8px;
           background: var(--primary-background-color); color: var(--primary-text-color); font-size: 14px; }
+  .target-slot { display: block; width: 100%; }
+  .target-slot ha-entity-picker { display: block; width: 100%; }
   button { padding: 7px 10px; border: none; border-radius: 8px; cursor: pointer; font-size: 13px;
            background: var(--secondary-background-color); color: var(--primary-text-color); }
   button.primary { background: var(--primary-color); color: var(--text-primary-color, #fff); }

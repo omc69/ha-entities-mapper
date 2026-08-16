@@ -1,7 +1,7 @@
 {
   "domain": "ha_entities_mapper",
   "name": "HA Entities Mapper",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "config_flow": true,
   "documentation": "https://github.com/cgehring/ha-entities-mapper",
   "issue_tracker": "https://github.com/cgehring/ha-entities-mapper/issues",

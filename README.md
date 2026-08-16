@@ -1,5 +1,7 @@
 # HA Entities Mapper
 
+[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=omc69&repository=ha-entities-mapper&category=integration)
+
 Ein **semantischer Layer** über Home-Assistant-Entities: Du vergibst einen Wunsch-Key
 (z. B. `mein_licht`) und ordnest ihm eine echte Entity zu (z. B. `light.buro_christian`).
 Gepflegt wird die Tabelle in einem eigenen **Seitenleisten-Panel**.
