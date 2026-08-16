@@ -18,7 +18,7 @@ PANEL_FILES_URL = "/ha_entities_mapper_files"          # static path for JS
 PANEL_MODULE = f"{PANEL_FILES_URL}/ha-entities-mapper-panel.js"
 PANEL_COMPONENT = "ha-entities-mapper-panel"
 PANEL_TITLE = "Entities Mapper"
-PANEL_ICON = "mdi:table-cog"
+PANEL_ICON = "mdi:arrow-expand-all"
 
 # Service
 SERVICE_ACTION = "action"
