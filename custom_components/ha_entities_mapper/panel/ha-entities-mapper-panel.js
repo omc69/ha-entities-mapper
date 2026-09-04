@@ -70,7 +70,9 @@ class HaEntitiesMapperPanel extends HTMLElement {
       const el = document.createElement("ha-entity-picker");
       el.hass = this._hass;
       el.allowCustomEntity = true;
-      el.label = "Target entity";
+      // The surrounding <label> already says "Target entity"; a second label
+      // on the picker would show the caption twice.
+      el.label = "";
       if (value) el.value = value;
       return el;
     }
@@ -221,6 +223,7 @@ class HaEntitiesMapperPanel extends HTMLElement {
         </div>
 
         <div class="card">
+          <div class="table-wrap">
           <table>
             <thead>
               <tr>
@@ -231,6 +234,7 @@ class HaEntitiesMapperPanel extends HTMLElement {
             </thead>
             <tbody id="rows"></tbody>
           </table>
+          </div>
           <div id="empty" class="empty" hidden>No mappings yet.</div>
         </div>
       </div>
@@ -316,7 +320,7 @@ class HaEntitiesMapperPanel extends HTMLElement {
         <td class="meta">${esc(m.manufacturer || "—")}</td>
         <td class="meta">${esc(m.device || "—")}</td>
         <td><code>${m.key}</code><br><span class="proxy">${m.proxy_entity_id}</span></td>
-        <td>${esc(m.target)}${m.target_available ? "" : ' <span class="warn">✗ missing</span>'}</td>
+        <td class="target">${esc(m.target)}${m.target_available ? "" : ' <span class="warn">✗ missing</span>'}</td>
         <td class="value" data-target="${esc(m.target)}">—</td>
         <td class="actions">${actions}</td>
       </tr>`;
@@ -360,7 +364,7 @@ function iconSpan(icon) {
 
 const STYLE = `
   :host { display:block; background: var(--primary-background-color); min-height:100vh; }
-  .wrap { max-width: 1000px; margin: 0 auto; padding: 16px; color: var(--primary-text-color); }
+  .wrap { max-width: 1400px; margin: 0 auto; padding: 16px; color: var(--primary-text-color); }
   .head h1 { margin: 8px 0 0; font-size: 22px; }
   .sub { color: var(--secondary-text-color); font-size: 13px; margin: 4px 0 16px; }
   code { background: var(--secondary-background-color); padding: 1px 5px; border-radius: 4px; font-size: 12px; }
@@ -378,8 +382,12 @@ const STYLE = `
            background: var(--secondary-background-color); color: var(--primary-text-color); }
   button.primary { background: var(--primary-color); color: var(--text-primary-color, #fff); }
   button.danger { background: transparent; color: var(--error-color, #db4437); }
+  /* Seven columns outgrow narrow windows. Scrolling inside the card keeps the
+     rows from spilling over its rounded edge. */
+  .table-wrap { overflow-x: auto; margin: 0 -16px -16px; padding: 0 16px 16px; }
   table { width: 100%; border-collapse: collapse; }
   th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--divider-color, #eee); font-size: 14px; vertical-align: top; }
+  td.target { overflow-wrap: anywhere; }
   th { font-size: 12px; text-transform: uppercase; color: var(--secondary-text-color); }
   td.actions, th.actions { text-align: right; white-space: nowrap; }
   td.actions button { margin-left: 4px; }
