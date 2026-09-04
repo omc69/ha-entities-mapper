@@ -89,6 +89,20 @@ async def ws_add(hass, connection, msg):
         connection.send_error(msg["id"], "invalid_target", "Target must be an entity_id.")
         return
 
+    # The proxy address sensor.<key> is a promise to the caller. If that id is
+    # already taken by a foreign entity, Home Assistant would silently create
+    # sensor.<key>_2 and the promise would be broken -- refuse instead.
+    registry = er.async_get(hass)
+    proxy_id = f"sensor.{key}"
+    existing = registry.async_get(proxy_id)
+    if existing is not None and existing.unique_id != f"{DOMAIN}_{key}":
+        connection.send_error(
+            msg["id"],
+            "entity_id_taken",
+            f"'{proxy_id}' already belongs to another entity. Choose a different key.",
+        )
+        return
+
     mapping = {
         "key": key,
         "name": (msg.get("name") or key).strip(),
@@ -174,9 +188,13 @@ async def ws_delete(hass, connection, msg):
     if entity is not None:
         await entity.async_remove(force_remove=True)
 
+    # Resolve the proxy through its unique_id. Assuming sensor.<key> would hit
+    # a foreign entity whenever that id was taken and the proxy landed on
+    # sensor.<key>_2 -- deleting a mapping must never touch someone else's
+    # registry entry.
     registry = er.async_get(hass)
-    ent_id = f"sensor.{key}"
-    if registry.async_get(ent_id):
+    ent_id = registry.async_get_entity_id("sensor", DOMAIN, f"{DOMAIN}_{key}")
+    if ent_id:
         registry.async_remove(ent_id)
 
     connection.send_result(msg["id"], {"deleted": key})
