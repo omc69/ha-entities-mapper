@@ -8,7 +8,7 @@ import voluptuous as vol
 
 from homeassistant.components import websocket_api
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers import entity_registry as er
+from homeassistant.helpers import device_registry as dr, entity_registry as er
 from homeassistant.util import slugify
 
 from .const import (
@@ -33,17 +33,38 @@ def async_register_websocket_api(hass: HomeAssistant) -> None:
     websocket_api.async_register_command(hass, ws_delete)
 
 
+def _device_of(hass: HomeAssistant, target: str | None) -> tuple[str | None, str | None]:
+    """Return (device name, manufacturer) of the target's device.
+
+    Both come from the device registry, so they need no maintenance in the
+    mapping table and stay correct when a device is renamed. Entities without
+    a device (template sensors, helpers) yield (None, None).
+    """
+    if not target:
+        return None, None
+    entry = er.async_get(hass).async_get(target)
+    if entry is None or not entry.device_id:
+        return None, None
+    device = dr.async_get(hass).async_get(entry.device_id)
+    if device is None:
+        return None, None
+    return (device.name_by_user or device.name), device.manufacturer
+
+
 def _row(hass: HomeAssistant, mapping: dict[str, Any]) -> dict[str, Any]:
     """Build a table row enriched with live state of the target."""
     proxy_id = f"sensor.{mapping['key']}"
     target = mapping.get("target")
     tstate = hass.states.get(target) if target else None
+    device, manufacturer = _device_of(hass, target)
     return {
         "key": mapping["key"],
         "name": mapping.get("name") or mapping["key"],
         "target": target,
         "icon": mapping.get("icon"),
         "proxy_entity_id": proxy_id,
+        "device": device,
+        "manufacturer": manufacturer,
         "target_available": tstate is not None,
         "target_state": tstate.state if tstate else None,
         "target_unit": (tstate.attributes.get("unit_of_measurement") if tstate else None),

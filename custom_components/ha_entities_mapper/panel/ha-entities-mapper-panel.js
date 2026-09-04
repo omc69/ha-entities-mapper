@@ -224,7 +224,8 @@ class HaEntitiesMapperPanel extends HTMLElement {
           <table>
             <thead>
               <tr>
-                <th>Name</th><th>Key / Proxy</th><th>Target entity</th>
+                <th>Name</th><th>Manufacturer</th><th>Device</th>
+                <th>Key / Proxy</th><th>Target entity</th>
                 <th>Value</th><th class="actions">Actions</th>
               </tr>
             </thead>
@@ -289,6 +290,8 @@ class HaEntitiesMapperPanel extends HTMLElement {
       return `
         <tr data-key="${m.key}" class="editing">
           <td><input class="e-name" value="${esc(m.name)}" /></td>
+          <td class="meta">${esc(m.manufacturer || "—")}</td>
+          <td class="meta">${esc(m.device || "—")}</td>
           <td><code>${m.key}</code></td>
           <td><div class="e-target-slot target-slot" data-value="${esc(m.target)}"></div></td>
           <td class="value" data-target="${esc(m.target)}">—</td>
@@ -310,6 +313,8 @@ class HaEntitiesMapperPanel extends HTMLElement {
     return `
       <tr data-key="${m.key}">
         <td>${m.icon ? iconSpan(m.icon) : ""}${esc(m.name)}</td>
+        <td class="meta">${esc(m.manufacturer || "—")}</td>
+        <td class="meta">${esc(m.device || "—")}</td>
         <td><code>${m.key}</code><br><span class="proxy">${m.proxy_entity_id}</span></td>
         <td>${esc(m.target)}${m.target_available ? "" : ' <span class="warn">✗ missing</span>'}</td>
         <td class="value" data-target="${esc(m.target)}">—</td>
@@ -380,6 +385,7 @@ const STYLE = `
   td.actions button { margin-left: 4px; }
   td.value { font-variant-numeric: tabular-nums; font-weight: 600; }
   .proxy { color: var(--secondary-text-color); font-size: 11px; }
+  .meta { color: var(--secondary-text-color); font-size: 12px; white-space: nowrap; }
   .warn { color: var(--error-color, #db4437); font-size: 12px; }
   .confirm { color: var(--error-color, #db4437); margin-right: 6px; font-size: 13px; }
   .empty { padding: 20px; text-align: center; color: var(--secondary-text-color); }

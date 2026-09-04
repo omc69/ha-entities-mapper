@@ -1,7 +1,7 @@
 {
   "domain": "ha_entities_mapper",
   "name": "HA Entities Mapper",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "config_flow": true,
   "documentation": "https://github.com/omc69/ha-entities-mapper",
   "issue_tracker": "https://github.com/omc69/ha-entities-mapper/issues",

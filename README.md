@@ -38,6 +38,11 @@ restart Home Assistant, then add the integration as in step 4 above.
 ## Using the panel
 
 - **New mapping:** key (slug), display name, target entity (searchable picker) → *Add*.
+- **Manufacturer** and **Device** are shown per row. Both are read from the
+  device registry of the target entity, so they need no maintenance and stay
+  correct when a device is renamed. Together with the name they make a row
+  unambiguous — e.g. *EcoFlow · River 3 · 12 V output*. Entities without a
+  device (template sensors, helpers) show `—`.
 - Per row: the target's live value, test buttons **▲ On / ▼ Off / ⇅ Toggle**,
   **Edit** (change name/target) and **✕** (delete, with confirmation).
 - The **key is immutable** (it is the `sensor.<key>` address). To rename: delete
