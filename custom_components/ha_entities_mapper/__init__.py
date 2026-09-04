@@ -25,6 +25,7 @@ from homeassistant.core import HomeAssistant, ServiceCall
 from homeassistant.exceptions import ServiceValidationError
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.storage import Store
+from homeassistant.loader import async_get_integration
 
 from .const import (
     ATTR_ACTION,
@@ -136,11 +137,17 @@ async def _async_register_panel(hass: HomeAssistant) -> None:
         # Already registered from a previous setup in this process.
         _LOGGER.debug("Static path already registered: %s", err)
 
+    # Cache buster from the manifest version. Hard-coding it means the URL
+    # never changes, so browsers keep serving the panel from cache after an
+    # update and the new table silently stays invisible.
+    integration = await async_get_integration(hass, DOMAIN)
+    version = str(integration.version) if integration.version else "dev"
+
     await panel_custom.async_register_panel(
         hass,
         webcomponent_name=PANEL_COMPONENT,
         frontend_url_path=PANEL_URL_PATH,
-        module_url=f"{PANEL_MODULE}?v=0.1.4",
+        module_url=f"{PANEL_MODULE}?v={version}",
         sidebar_title=PANEL_TITLE,
         sidebar_icon=PANEL_ICON,
         require_admin=True,
